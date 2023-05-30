@@ -119,6 +119,7 @@ sealed trait PathAndQuery {
         case :&(_, (k, v)) if k == name => Some(v)
         case :&(prev, _)                => aux(prev)
         case _ :? tpl if tpl._1 == name => Some(tpl._2)
+        case _ :? _                     => None
       }
     }
 
@@ -177,13 +178,10 @@ sealed trait Path extends PathAndQuery {
     @tailrec
     def reverse(path: Path, result: Path): Path = {
       path match {
-        case p: / =>
-          if (p.prev == Root) {
-            PathAndQuery./(result, p.value)
-          } else {
-            reverse(p.prev, PathAndQuery./(result, p.value))
-          }
-        case Root => Root
+        case prev / value =>
+          reverse(prev, result / value)
+        case Root =>
+          result
       }
     }
 
@@ -194,13 +192,10 @@ sealed trait Path extends PathAndQuery {
     @tailrec
     def aux(result: Path, other: Path): Path = {
       other match {
-        case p: / =>
-          if (p.prev == Root) {
-            PathAndQuery./(result, p.value)
-          } else {
-            aux(result / p.value, p.prev)
-          }
-        case Root => tail
+        case prev / value =>
+          aux(result / value, prev)
+        case Root =>
+          result
       }
     }
 
